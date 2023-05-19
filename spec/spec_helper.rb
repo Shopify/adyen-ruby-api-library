@@ -24,11 +24,11 @@ def create_test(client, service, method_name, parent_object)
   }
 
   # authentication headers
-  if !client.api_key.nil?
+  if not client.api_key.nil?
     headers["x-api-key"] = client.api_key
-  elsif !client.oauth_token.nil?
+  elsif not client.oauth_token.nil?
     headers["Authorization"] = "Bearer #{client.oauth_token}"
-  elsif !client.ws_user.nil? && !client.ws_password.nil?
+  elsif not client.ws_user.nil? and not client.ws_password.nil?
     auth_header = "Basic " + Base64::encode64("#{client.ws_user}:#{client.ws_password}")
     headers["Authorization"] = auth_header.strip
   else
