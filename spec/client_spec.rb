@@ -36,6 +36,11 @@ RSpec.describe Adyen do
       to raise_error(Adyen::AuthenticationError)
   end
 
+  it "fails a checkout call without oauth token" do
+    expect{ @shared_values[:client].checkout.payments_api.payment_methods("{}") }.
+      to raise_error(Adyen::AuthenticationError)
+  end
+
   it "fails a checkout call without api key" do
     expect{ @shared_values[:client].checkout.payments_api.payment_methods("{}") }.
       to raise_error(Adyen::AuthenticationError)

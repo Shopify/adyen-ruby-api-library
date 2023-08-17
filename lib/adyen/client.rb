@@ -303,6 +303,46 @@ module Adyen
         raise Adyen::AuthenticationError.new("Checkout service requires API-key or oauth_token", request_data), "Checkout service requires API-key or oauth_token"
       end
     end
+
+    private
+
+    def auth_header(auth_type, faraday)
+      case auth_type
+      when "basic"
+        if Gem::Version.new(Faraday::VERSION) >= Gem::Version.new('2.0')
+          # for faraday 2.0 and higher
+          faraday.request :authorization, :basic, @ws_user, @ws_password
+        else
+          # for faraday 1.x
+          faraday.basic_auth(@ws_user, @ws_password)
+        end
+      when "api-key"
+        faraday.headers["x-api-key"] = @api_key
+      when "oauth"
+        faraday.headers["Authorization"] = "Bearer #{@oauth_token}"
+      end
+    end
+
+    def auth_type(service, request_data)
+      # make sure valid authentication has been provided
+      validate_auth_type(service, request_data)
+      # Will prioritize authentication methods in this order:
+      # api-key, oauth, basic
+      return "api-key" unless @api_key.nil?
+      return "oauth" unless @oauth_token.nil?
+      "basic"
+    end
+
+    def validate_auth_type(service, request_data)
+      # ensure authentication has been provided
+      if @api_key.nil? && @oauth_token.nil? && (@ws_password.nil? || @ws_user.nil?)
+        raise Adyen::AuthenticationError.new("No authentication found - please set api_key, oauth_token or ws_user and ws_password", request_data), "No authentication found - please set api_key, oauth_token or ws_user and ws_password"
+      end
+      # ensure sufficient authentication type has been provided for the service
+      if service == "PaymentSetupAndVerification" && @api_key.nil? && @oauth_token.nil?
+        raise Adyen::AuthenticationError.new("Checkout service requires API-key or oauth_token", request_data), "Checkout service requires API-key or oauth_token"
+      end
+    end
   end
 end
 # rubocop:enable all
